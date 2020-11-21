@@ -18,4 +18,4 @@ asyncio.run(start())
 ```
 
 ## Other examples
-More examples can be found in [src/examples](src/examples).
+More examples can be found in [src/examples](https://github.com/apatrushev/aioflows/tree/master/src/examples).
