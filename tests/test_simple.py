@@ -12,7 +12,7 @@ async def test_printer():
     await asyncio.wait(
         (
             (List([1, 2, 3]) >> Printer(stream)).start(),
-            asyncio.sleep(0.002),
+            asyncio.sleep(0.01),
         ),
         return_when=asyncio.FIRST_COMPLETED,
     )
