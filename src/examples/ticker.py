@@ -3,7 +3,7 @@ import logging
 
 from spherical.dev.log import init_logging
 
-from aioflows.samples import (
+from aioflows.simple import (
     Applicator,
     Counter,
     Filter,

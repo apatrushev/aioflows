@@ -1,6 +1,6 @@
 import asyncio
 
-from aioflows.samples import Printer, Ticker
+from aioflows.simple import Printer, Ticker
 
 
 async def start():

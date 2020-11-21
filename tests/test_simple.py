@@ -3,7 +3,7 @@ import io
 
 import pytest
 
-from aioflows.samples import List, Printer
+from aioflows.simple import List, Printer
 
 
 @pytest.mark.asyncio

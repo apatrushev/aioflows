@@ -7,7 +7,7 @@ This project aimed to implement helper library for building async applications i
 ```python
 import asyncio
 
-from aioflows.samples import Printer, Ticker
+from aioflows.simple import Printer, Ticker
 
 
 async def start():
