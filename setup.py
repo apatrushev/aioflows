@@ -26,6 +26,7 @@ setup(
     },
     install_requires=[
         'cached-property',
+        'janus',
     ],
     extras_require={
         'dev': [
