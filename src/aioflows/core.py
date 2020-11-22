@@ -93,6 +93,7 @@ class Connector(Proc, Actor):
     if right one does not process data fast enough.
     """
     def __init__(self, left, right):
+        super().__init__()
         self.left = left
         self.right = right
 

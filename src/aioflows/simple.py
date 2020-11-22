@@ -7,6 +7,7 @@ from .core import Actor, Proc, Sink, Source
 
 class Ticker(Source, Actor):
     def __init__(self, timeout=1):
+        super().__init__()
         self.timeout = timeout
 
     async def main(self):
@@ -26,6 +27,7 @@ class Counter(Proc, Actor):
 
 class Printer(Sink, Actor):
     def __init__(self, stream=sys.stdout):
+        super().__init__()
         self.stream = stream
 
     async def main(self):
@@ -41,6 +43,7 @@ class Null(Sink, Actor):
 
 class Logger(Proc, Actor):
     def __init__(self, logger=None, level=logging.DEBUG):
+        super().__init__()
         self.logger = logging.getLogger(logger)
         self.level = level
 
@@ -53,6 +56,7 @@ class Logger(Proc, Actor):
 
 class Applicator(Proc, Actor):
     def __init__(self, func):
+        super().__init__()
         self.func = func
 
     async def main(self):
@@ -62,6 +66,7 @@ class Applicator(Proc, Actor):
 
 class Filter(Proc, Actor):
     def __init__(self, func):
+        super().__init__()
         self.func = func
 
     async def main(self):
@@ -73,6 +78,7 @@ class Filter(Proc, Actor):
 
 class Tee(Proc, Actor):
     def __init__(self, other):
+        super().__init__()
         self.other = other
         self.queue = asyncio.Queue(maxsize=1)
 
@@ -92,6 +98,7 @@ class Tee(Proc, Actor):
 
 class List(Source, Actor):
     def __init__(self, data):
+        super().__init__()
         self.data = list(data)
 
     async def main(self):

@@ -5,6 +5,7 @@ from .core import Actor, Proc
 
 class Udp(Proc, Actor):
     def __init__(self, **kwargs):
+        super().__init__()
         self.options = kwargs
         self.queue = asyncio.Queue(maxsize=1)
 
