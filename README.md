@@ -17,5 +17,26 @@ async def start():
 asyncio.run(start())
 ```
 
+## Udp echo example
+```python
+import asyncio
+
+from aioflows.network import Udp
+from aioflows.simple import Printer, Tee
+
+
+async def start():
+    udp = Udp(local_addr=('127.0.0.1', 5353), reuse_port=True)
+    await (udp >> Tee(Printer()) >> udp).start()
+
+
+asyncio.run(start())
+```
+
+You can test it with socat:
+```bash
+socat - UDP:localhost:5353
+```
+
 ## Other examples
 More examples can be found in [src/examples](https://github.com/apatrushev/aioflows/tree/master/src/examples).
