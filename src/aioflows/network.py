@@ -26,21 +26,15 @@ class Udp(Proc, Actor):
             )
         )
         try:
-            inp, outp = None, None
-            while True:
-                if inp is None and self.getter is not None:
-                    inp = asyncio.ensure_future(self.getter())
-                if outp is None and self.putter is not None:
-                    outp = asyncio.ensure_future(self.queue.get())
-                done, pending = await asyncio.wait(
-                    tuple(filter(None, (inp, outp))),
-                    return_when=asyncio.FIRST_COMPLETED,
-                )
-                if inp in done:
-                    transport.sendto(*inp.result())
-                    inp = None
-                if outp in done:
-                    await self.send(outp.result())
-                    outp = None
+            await asyncio.gather(
+                self.mover(
+                    self.getter,
+                    lambda x: transport.sendto(*x),
+                ),
+                self.mover(
+                    self.queue.get,
+                    self.send,
+                ),
+            )
         finally:
             transport.close()

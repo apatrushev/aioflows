@@ -55,13 +55,22 @@ class Logger(Proc, Actor):
 
 
 class Applicator(Proc, Actor):
-    def __init__(self, func):
+    def __init__(self, func, thread=False):
         super().__init__()
         self.func = func
+        self.thread = thread
 
     async def main(self):
         while True:
-            await self.send(self.func(await self.receive()))
+            data = await self.receive()
+            if self.thread:
+                loop = asyncio.get_running_loop()
+                result = await loop.run_in_executor(None, self.func, data)
+            else:
+                result = self.func(data)
+            if asyncio.iscoroutine(result):
+                result = await result
+            await self.send(result)
 
 
 class Filter(Proc, Actor):

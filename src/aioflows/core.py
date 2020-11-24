@@ -49,6 +49,20 @@ class Actor(abc.ABC, metaclass=ActorMeta):
         """
         return Connector(self, other)
 
+    @staticmethod
+    async def mover(getter, putter):
+        while True:
+            data = getter()
+            if asyncio.iscoroutine(data):
+                data = asyncio.ensure_future(data)
+            if asyncio.isfuture(data):
+                data = await data
+            result = putter(data)
+            if asyncio.iscoroutine(result):
+                result = asyncio.ensure_future(result)
+            if asyncio.isfuture(result):
+                result = await result
+
 
 class Sink:
     """Base class for Sinks."""
