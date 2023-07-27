@@ -101,7 +101,7 @@ class Tee(Proc, Actor):
         self.other.getter = self.queue.get
         return asyncio.gather(
             self.other.start(),
-            super().start()
+            super().start(),
         )
 
 

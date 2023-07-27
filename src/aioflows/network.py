@@ -23,7 +23,7 @@ class Udp(Proc, Actor):
             asyncio.get_running_loop().create_datagram_endpoint(
                 lambda: self,
                 **self.options,
-            )
+            ),
         )
         try:
             await asyncio.gather(

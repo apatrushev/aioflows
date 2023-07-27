@@ -21,7 +21,7 @@ async def test_printer():
     # proper cancellation of flows yet
     tasks = []
     for task in asyncio.tasks.all_tasks():
-        if task is not asyncio.Task.current_task():
+        if task is not asyncio.current_task():
             task.cancel()
             tasks.append(task)
     await asyncio.wait(tasks)

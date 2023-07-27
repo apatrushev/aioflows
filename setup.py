@@ -30,9 +30,8 @@ setup(
     ],
     extras_require={
         'dev': [
-            'isort<5',
             'pytest-asyncio',
-            'spherical-dev[dev]>=0.1.0,<0.2',
+            'spherical-dev[dev]>=0.2.20,<0.3',
         ],
     },
     classifiers=[
@@ -43,6 +42,8 @@ setup(
         'Programming Language :: Python',
         'Topic :: Software Development :: Libraries',
     ],
-    python_requires='>=3.8',
+    # upper bound required due to the problem in cached-property
+    # https://github.com/pydanny/cached-property/pull/267
+    python_requires='>=3.8,<3.11',
     zip_safe=True,
 )

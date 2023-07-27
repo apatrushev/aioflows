@@ -24,13 +24,13 @@ class Thread(Proc, Actor):
                 self.mover(
                     self.receive,
                     self.q2t.async_q.put,
-                )
+                ),
             )
         if self.putter is not None:
             tasks.append(
                 self.mover(
                     self.t2q.async_q.get,
                     self.send,
-                )
+                ),
             )
         await asyncio.gather(*tasks)

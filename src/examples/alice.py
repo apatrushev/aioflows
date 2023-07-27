@@ -6,7 +6,7 @@ import uuid
 
 import aiohttp
 import requests
-from aioconsole.stream import ainput, aprint
+from aioconsole.stream import ainput
 
 from aioflows.core import Actor
 from aioflows.simple import Applicator, Printer, Sink, Tee
@@ -35,7 +35,7 @@ def device_token(local_token, data):
         response = requests.get(
             'https://quasar.yandex.net/glagol/token',
             headers={
-                'Authorization': f'Oauth {local_token}'
+                'Authorization': f'Oauth {local_token}',
             },
             params={
                 'device_id': properties['deviceId'],
@@ -44,7 +44,7 @@ def device_token(local_token, data):
         )
         response.raise_for_status()
         return (addresses, properties, response.json()['token'])
-    except BaseException as exc:
+    except BaseException:
         print('token receive error')
 
 

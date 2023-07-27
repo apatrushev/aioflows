@@ -23,7 +23,7 @@ async def start():
         >> Tee(
             Filter(lambda x: x % 2)
             >> Logger('tee', logging.DEBUG)
-            >> Null()
+            >> Null(),
         )
         >> Applicator(lambda x: x * 2)
         >> Logger('after', logging.ERROR)
