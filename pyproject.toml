@@ -20,6 +20,7 @@ dynamic = ["version"]
 dependencies = [
     "cached-property",
     "janus",
+    "pydantic",
 ]
 
 classifiers = [

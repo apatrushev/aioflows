@@ -23,8 +23,8 @@ def shell_command(command, _, putter):
 
 async def start():
     flow = (
-        Thread(functools.partial(shell_command, 'ls -l'))
-        >> Applicator(lambda x: x.decode().rstrip())
+        Thread(func=functools.partial(shell_command, 'ls -l'))
+        >> Applicator(func=lambda x: x.decode().rstrip())
         >> Printer()
     )
     await flow.start()
