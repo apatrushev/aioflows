@@ -18,15 +18,17 @@ from aioflows.simple import (
 async def start():
     flow = (
         Ticker(timeout=0.1, limit=3)
-        >> Logger('before', logging.DEBUG)
+        >> Logger(logger='before', level=logging.DEBUG)
         >> Counter()
         >> Tee(
-            Filter(lambda x: x % 2)
-            >> Logger('tee', logging.DEBUG)
-            >> Null(),
+            sink=(
+                Filter(func=lambda x: x % 2)
+                >> Logger(logger='tee', level=logging.DEBUG)
+                >> Null()
+            ),
         )
-        >> Applicator(lambda x: x * 2)
-        >> Logger('after', logging.ERROR)
+        >> Applicator(func=lambda x: x * 2)
+        >> Logger(logger='after', level=logging.ERROR)
         >> Printer()
     )
     await flow.start()

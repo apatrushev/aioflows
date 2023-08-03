@@ -3,7 +3,12 @@ import io
 
 import pytest
 
-from aioflows.core import DATA_FINISH_MARKER
+from aioflows.core import (
+    DATA_FINISH_MARKER,
+    Actor,
+    ActorArgumentsError,
+    ActorSyntaxError,
+)
 from aioflows.simple import (
     Applicator,
     Counter,
@@ -28,6 +33,22 @@ async def finalize():
 
 
 @pytest.mark.asyncio
+async def test_printer():
+    stream = io.StringIO()
+    result = await asyncio.wait(
+        (
+            (List(data=[1, 2, 3]) >> Printer(stream=stream)).start(),
+            asyncio.sleep(0.01),
+        ),
+        return_when=asyncio.FIRST_COMPLETED,
+    )
+    assert [k.done() and k.exception() for x in result for k in x] == [None, False]
+
+    # we need this magic because we do not have
+    # proper cancellation of flows yet
+
+
+@pytest.mark.asyncio
 async def test_tee_filter_applicator_null_logger():
     async def double(x):
         return x * 2
@@ -35,14 +56,14 @@ async def test_tee_filter_applicator_null_logger():
     stream = io.StringIO()
     pipeline = asyncio.create_task(
         (
-            List([1, 2, 3])
-            >> Filter(lambda x: x > 1)
-            >> Applicator(lambda x: x * 2, thread=True)
-            >> Applicator(lambda x: x * 2)
-            >> Applicator(double)
-            >> Tee(Printer(stream))
-            >> Tee(Logger() >> Null())
-            >> Tee(Logger())
+            List(data=[1, 2, 3])
+            >> Filter(func=lambda x: x > 1)
+            >> Applicator(func=lambda x: x * 2, thread=True)
+            >> Applicator(func=lambda x: x * 2)
+            >> Applicator(func=double)
+            >> Tee(sink=(Printer(stream=stream)))
+            >> Tee(sink=(Logger() >> Null()))
+            >> Tee(sink=Logger())
             >> Null()
         ).start(),
     )
@@ -66,9 +87,9 @@ async def test_ticker_counter_printer_finishing():
         (
             Ticker(timeout=0.01, limit=5)
             >> Counter()
-            >> Filter(lambda x: x % 2)
-            >> Applicator(lambda x: x * 2)
-            >> Printer(stream)
+            >> Filter(func=lambda x: x % 2)
+            >> Applicator(func=lambda x: x * 2)
+            >> Printer(stream=stream)
         ).start(),
     )
     await asyncio.wait(
@@ -99,8 +120,8 @@ async def test_thread_printer():
 
     pipeline = asyncio.create_task(
         (
-            List('abc')
-            >> Thread(func)
+            List(data='abc')
+            >> Thread(func=func)
             >> Null()
         ).start(),
     )
@@ -115,3 +136,15 @@ async def test_thread_printer():
 
     await finalize()
     assert stream.getvalue() == 'a\nb\nc\n'
+
+
+def test_positional_argument_exception():
+    with pytest.raises(ActorArgumentsError):
+        Printer(1)
+
+
+def test_pinit_in_actor_exception():
+    with pytest.raises(ActorSyntaxError):
+        class Some(Actor):
+            def __init__(self):
+                pass

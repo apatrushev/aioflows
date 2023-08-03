@@ -8,7 +8,7 @@ import aiohttp
 import requests
 from aioconsole.stream import ainput
 
-from aioflows.core import Actor
+from aioflows.core import Actor, mover
 from aioflows.simple import Applicator, Printer, Sink, Tee
 from aioflows.zeroconf import Zeroconf
 
@@ -89,12 +89,11 @@ class Alice(Sink, Actor):
     async def main(self):
         token, ws = await self.receive()
         await asyncio.gather(
-            self.mover(
+            mover(
                 ws.receive,
                 lambda x: (__import__('pdb').set_trace()),
-                # lambda x: None,
             ),
-            self.mover(
+            mover(
                 self.next_message,
                 lambda x: say(ws, token, x),
             ),

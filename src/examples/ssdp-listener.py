@@ -24,8 +24,8 @@ async def start():
     mreq = struct.pack('=4sl', socket.inet_aton('239.255.255.250'), socket.INADDR_ANY)
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
     flow = (
-        Udp(sock=sock)
-        >> Applicator(parser)
+        Udp(options=dict(sock=sock))
+        >> Applicator(func=parser)
         >> Printer()
     )
     await flow.start()

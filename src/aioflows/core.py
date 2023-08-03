@@ -1,6 +1,8 @@
 import abc
 import asyncio
+import dataclasses
 
+import pydantic
 from cached_property import cached_property
 
 
@@ -19,9 +21,45 @@ async def receiver(receive):
         yield data
 
 
+class ActorSyntaxError(RuntimeError):
+    def __init__(self, name):
+        super().__init__(
+            f'please do not use __init__ or config in actors: "{name}"',
+        )
+
+
+class ActorArgumentsError(RuntimeError):
+    def __init__(self):
+        super().__init__(
+            "please do not use positional arguments in actor's init",
+        )
+
+
+class ActorConfigurationError(RuntimeError):
+    def __init__(self, option):
+        super().__init__(
+            f'actor option "{option}" is not defined',
+        )
+
+
 class ActorMeta(abc.ABCMeta):
     """Helper class to implement syntactic sugar for actors."""
     def __new__(cls, name, bases, dct):
+        if (
+            '__init__' in dct and (
+                dct['__init__'].__module__ != __name__ or
+                name != 'Actor'
+            )
+        ) or 'config' in dct:
+            raise ActorSyntaxError(name)
+        if 'Options' in dct and 'Arguments' not in dct:
+            dct['Arguments'] = (
+                dataclasses.make_dataclass(
+                    'Arguments',
+                    (),
+                    bases=(dct['Options'],),
+                )
+            )
         if 'main' in dct and not isinstance(dct['main'], cached_property):
             # automatically wraps actors main to cached property
             # to avoid multiple calls and use it in cancellation
@@ -35,6 +73,19 @@ class Actor(abc.ABC, metaclass=ActorMeta):
 
     Implements actors connection magic and flow control.
     """
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+        if args:
+            raise ActorArgumentsError()
+        self.config = (
+            self.Arguments(**kwargs)
+            if (
+                hasattr(self, 'Arguments') and
+                dataclasses.fields(self.Arguments)
+            ) else
+            None
+        )
+
     def start(self):
         return self.main
 
@@ -62,7 +113,17 @@ class Actor(abc.ABC, metaclass=ActorMeta):
             operation arguments. Can be used in further join
             operations or started alone if completed.
         """
-        return Connector(self, other)
+        return Connector(left=self, right=other)
+
+    @property
+    def options(self):
+        if hasattr(self, 'Options'):
+            options = pydantic.tools.schema_of(self.Options)
+            props = options['definitions']['Options']['properties']
+            for k, v in props.items():
+                v['default'] = getattr(self.config, k)
+            return (options,)
+        return ()
 
     @staticmethod
     async def mover(getter, putter):
@@ -79,6 +140,14 @@ class Actor(abc.ABC, metaclass=ActorMeta):
                 result = await result
             if data is DATA_FINISH_MARKER:
                 break
+
+    def configure(self, options):
+        """Configures actor with provided options."""
+        options, = options
+        for name, value in options.items():
+            if not hasattr(self.Options, name):
+                raise ActorConfigurationError(name)
+            setattr(self.config, name, value)
 
 
 class Sink:
@@ -123,41 +192,55 @@ class Connector(Proc, Actor):
     buffering actor between them otherwise left actor will be locked
     if right one does not process data fast enough.
     """
-    def __init__(self, left, right):
-        super().__init__()
-        self.left = left
-        self.right = right
+
+    @dataclasses.dataclass
+    class Arguments:
+        left: Source
+        right: Sink
 
     @property
     def putter(self):
         """Connects outgoing queue of right to external world."""
-        return self.right.putter
+        return self.config.right.putter
 
     @putter.setter
     def putter(self, value):
-        self.right.putter = value
+        self.config.right.putter = value
 
     @property
     def getter(self):
         """Connects incoming queue of left to external world."""
-        return self.left.getter
+        return self.config.left.getter
 
     @getter.setter
     def getter(self, value):
-        self.left.getter = value
+        self.config.left.getter = value
+
+    @property
+    def options(self):
+        options = (*self.config.left.options, *self.config.right.options)
+        return options if options else ()
+
+    def configure(self, options):
+        """Configures legs with provided options."""
+        left = len(self.config.left.options)
+        if options[:left]:
+            self.config.left.configure(options[:left])
+        if options[left:]:
+            self.config.right.configure(options[left:])
 
     def start(self):
         """Overrides main Actor flow to connect legs."""
         queue = asyncio.Queue(1)
-        self.left.putter = queue.put
-        self.right.getter = queue.get
+        self.config.left.putter = queue.put
+        self.config.right.getter = queue.get
         return super().start()
 
     async def main(self):
         """Overrides main Actor flow to await both legs."""
         await asyncio.gather(
-            self.left.start(),
-            self.right.start(),
+            self.config.left.start(),
+            self.config.right.start(),
         )
 
     def __repr__(self):

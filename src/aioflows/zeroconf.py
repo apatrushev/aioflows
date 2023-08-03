@@ -1,3 +1,6 @@
+import dataclasses
+from typing import Optional
+
 import zeroconf
 
 from .core import Source
@@ -17,6 +20,12 @@ class Listener(Source):
 
 
 class Zeroconf(Thread):
+
+    @dataclasses.dataclass
+    class Options:
+        logger: Optional[str] = None
+        '''Logger name.'''
+
     def __init__(self, service_type):
         super().__init__(self)
         self.service_type = service_type

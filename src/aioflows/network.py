@@ -1,13 +1,17 @@
 import asyncio
+import dataclasses
+from typing import Any, Dict
 
 from .core import Actor, Proc
 
 
 class Udp(Proc, Actor):
-    def __init__(self, **kwargs):
-        super().__init__()
-        self.options = kwargs
-        self.queue = asyncio.Queue(maxsize=1)
+    queue: asyncio.Queue = None
+
+    @dataclasses.dataclass
+    class Options:
+        options: Dict[str, Any] = None
+        '''Socket options sended directly to `create_datagram_endpoint`.'''
 
     def connection_made(self, transport):
         pass
@@ -20,9 +24,9 @@ class Udp(Proc, Actor):
 
     async def main(self):
         loop = asyncio.get_running_loop()
-        transport, protocol = await loop.create_datagram_endpoint(
+        transport, _ = await loop.create_datagram_endpoint(
             lambda: self,
-            **self.options,
+            **self.config.options,
         )
         try:
             tasks = []
@@ -39,3 +43,7 @@ class Udp(Proc, Actor):
             await asyncio.gather(*tasks)
         finally:
             transport.close()
+
+    def start(self):
+        self.queue = asyncio.Queue(maxsize=1)
+        return super().start()
