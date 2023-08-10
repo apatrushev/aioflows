@@ -33,6 +33,12 @@ setup(
             'pytest-asyncio',
             'spherical-dev[dev]>=0.2.20,<0.3',
         ],
+        'examples': [
+            'aioconsole',
+            'aiohttp',
+            'requests',
+            'zeroconf',
+        ],
     },
     classifiers=[
         'Development Status :: 1 - Planning',
