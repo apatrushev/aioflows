@@ -19,22 +19,23 @@ class Udp(Proc, Actor):
         self.queue.put_nowait((data, addr))
 
     async def main(self):
-        transport, protocol = await (
-            asyncio.get_running_loop().create_datagram_endpoint(
-                lambda: self,
-                **self.options,
-            ),
+        loop = asyncio.get_running_loop()
+        transport, protocol = await loop.create_datagram_endpoint(
+            lambda: self,
+            **self.options,
         )
         try:
-            await asyncio.gather(
-                self.mover(
-                    self.getter,
+            tasks = []
+            if self.getter is not None:
+                tasks.append(self.mover(
+                    self.receive,
                     lambda x: transport.sendto(*x),
-                ),
-                self.mover(
+                ))
+            if self.putter is not None:
+                tasks.append(self.mover(
                     self.queue.get,
                     self.send,
-                ),
-            )
+                ))
+            await asyncio.gather(*tasks)
         finally:
             transport.close()
