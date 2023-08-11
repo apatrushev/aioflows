@@ -36,6 +36,7 @@ setup(
         'examples': [
             'aioconsole',
             'aiohttp',
+            'aiomqtt',
             'requests',
             'zeroconf',
         ],
