@@ -17,7 +17,7 @@ from aioflows.simple import (
 
 async def start():
     flow = (
-        Ticker()
+        Ticker(timeout=0.1, limit=3)
         >> Logger('before', logging.DEBUG)
         >> Counter()
         >> Tee(

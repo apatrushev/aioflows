@@ -6,14 +6,17 @@ from .core import Actor, Proc, Sink, Source
 
 
 class Ticker(Source, Actor):
-    def __init__(self, timeout=1):
+    def __init__(self, timeout=1, limit=None):
         super().__init__()
         self.timeout = timeout
+        self.limit = limit
 
     async def main(self):
-        while True:
+        while self.limit is None or self.limit > 0:
             await self.send(None)
             await asyncio.sleep(self.timeout)
+            if self.limit is not None:
+                self.limit -= 1
 
 
 class Counter(Proc, Actor):
