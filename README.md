@@ -1,7 +1,7 @@
 # aioflows
 [![Project Status: Concept – Minimal or no implementation has been done yet, or the repository is only intended to be a limited example, demo, or proof-of-concept.](https://www.repostatus.org/badges/latest/concept.svg)](https://www.repostatus.org/#concept)
 
-This project aimed to implement helper library for building async applications in python based on concept of structured data flows and actors. The current stage is pure proof-of-concept and basement for discussion with colleagues and community. It is not inteded to be used in any production or even pet projects.
+This project aims to implement a helper library for building asynchronous applications in Python, based on the concept of structured data flows and actors. The current stage is pure proof-of-concept and basis for discussion with colleagues and community. It is not intended to be used in any production or even pet projects.
 
 ## Installation
  - local
@@ -89,6 +89,6 @@ done 2>&1 | grep ERRORCODE
 ```
 
 ## Similar projects
-I found existing solutions almost equal to this concept:
+I found existing solutions that are almost equal to this concept:
  - https://github.com/ReactiveX/RxPY
  - https://github.com/vxgmichel/aiostream
