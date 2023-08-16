@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=62.3", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aioflows"
+authors = [
+    {name = "Anton Patrushev", email = "apatrushev@gmail.com"},
+]
+
+description = "Python data flows library to build structured applications"
+readme = {file = "README.md", content-type = "text/markdown"}
+license = {text = "MIT"}
+
+# upper bound required due to the problem in cached-property
+# https://github.com/pydanny/cached-property/pull/267
+requires-python = ">=3.8,<3.11"
+dynamic = ["version"]
+
+dependencies = [
+    "cached-property",
+    "janus",
+]
+
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Framework :: AsyncIO",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Topic :: Software Development :: Libraries",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest-asyncio",
+    "spherical-dev[dev]>=0.3.0,<0.4",
+]
+examples = [
+    "aioconsole",
+    "aiohttp",
+    "aiomqtt",
+    "requests",
+    "zeroconf",
+]
+
+[tool.setuptools_scm]
+
+[tool.setuptools]
+zip-safe = true
