@@ -3,6 +3,7 @@ import io
 
 import pytest
 
+from aioflows.core import DATA_FINISH_MARKER
 from aioflows.simple import (
     Applicator,
     Counter,
@@ -14,6 +15,15 @@ from aioflows.simple import (
     Tee,
     Ticker,
 )
+
+
+async def finalize():
+    tasks = []
+    for task in asyncio.tasks.all_tasks():
+        if task is not asyncio.current_task():
+            task.cancel()
+            tasks.append(task)
+    await asyncio.wait(tasks)
 
 
 @pytest.mark.asyncio
@@ -44,13 +54,7 @@ async def test_tee_filter_applicator_null_logger():
     )
     assert pipeline.done()
 
-    tasks = []
-    for task in asyncio.tasks.all_tasks():
-        if task is not asyncio.current_task():
-            task.cancel()
-            tasks.append(task)
-    await asyncio.wait(tasks)
-
+    await finalize()
     assert stream.getvalue() == '16\n24\n'
 
 
@@ -75,11 +79,5 @@ async def test_ticker_counter_printer_finishing():
     )
     assert pipeline.done()
 
-    tasks = []
-    for task in asyncio.tasks.all_tasks():
-        if task is not asyncio.current_task():
-            task.cancel()
-            tasks.append(task)
-    await asyncio.wait(tasks)
-
+    await finalize()
     assert stream.getvalue() == '2\n6\n'
