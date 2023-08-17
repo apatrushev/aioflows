@@ -7,6 +7,18 @@ from cached_property import cached_property
 DATA_FINISH_MARKER = object()
 
 
+async def receiver(receive):
+    while True:
+        data = receive()
+        if asyncio.iscoroutine(data):
+            data = asyncio.ensure_future(data)
+        if asyncio.isfuture(data):
+            data = await data
+        if data == DATA_FINISH_MARKER:
+            break
+        yield data
+
+
 class ActorMeta(abc.ABCMeta):
     """Helper class to implement syntactic sugar for actors."""
     def __new__(cls, name, bases, dct):

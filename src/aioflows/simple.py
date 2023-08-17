@@ -2,7 +2,7 @@ import asyncio
 import logging
 import sys
 
-from .core import DATA_FINISH_MARKER, Actor, Proc, Sink, Source
+from .core import DATA_FINISH_MARKER, Actor, Proc, Sink, Source, receiver
 
 
 class Ticker(Source, Actor):
@@ -12,7 +12,7 @@ class Ticker(Source, Actor):
         self.limit = limit
 
     async def main(self):
-        while self.limit is None or self.limit > 0:
+        while self.limit:
             await self.send(None)
             await asyncio.sleep(self.timeout)
             if self.limit is not None:
@@ -23,10 +23,7 @@ class Ticker(Source, Actor):
 class Counter(Proc, Actor):
     async def main(self):
         counter = 0
-        while True:
-            data = await self.receive()
-            if data is DATA_FINISH_MARKER:
-                break
+        async for _ in receiver(self.receive):
             await self.send(counter)
             counter += 1
         await self.send(DATA_FINISH_MARKER)
@@ -38,19 +35,14 @@ class Printer(Sink, Actor):
         self.stream = stream
 
     async def main(self):
-        while True:
-            data = await self.receive()
-            if data is DATA_FINISH_MARKER:
-                break
+        async for data in receiver(self.receive):
             print(data, file=self.stream)
 
 
 class Null(Sink, Actor):
     async def main(self):
-        while True:
-            data = await self.receive()
-            if data is DATA_FINISH_MARKER:
-                break
+        async for _ in receiver(self.receive):
+            pass
 
 
 class Logger(Proc, Actor):
@@ -60,10 +52,7 @@ class Logger(Proc, Actor):
         self.level = level
 
     async def main(self):
-        while True:
-            data = await self.receive()
-            if data is DATA_FINISH_MARKER:
-                break
+        async for data in receiver(self.receive):
             self.logger.log(self.level, data)
             await self.send(data)
         await self.send(DATA_FINISH_MARKER)
@@ -76,17 +65,16 @@ class Applicator(Proc, Actor):
         self.thread = thread
 
     async def main(self):
-        while True:
-            data = await self.receive()
-            if data is DATA_FINISH_MARKER:
-                break
+        async for data in receiver(self.receive):
             if self.thread:
                 loop = asyncio.get_running_loop()
                 result = await loop.run_in_executor(None, self.func, data)
             else:
                 result = self.func(data)
-            if asyncio.iscoroutine(result):
-                result = await result
+                if asyncio.iscoroutine(result):
+                    result = asyncio.ensure_future(result)
+                if asyncio.isfuture(result):
+                    result = await result
             await self.send(result)
         await self.send(DATA_FINISH_MARKER)
 
@@ -97,10 +85,7 @@ class Filter(Proc, Actor):
         self.func = func
 
     async def main(self):
-        while True:
-            data = await self.receive()
-            if data is DATA_FINISH_MARKER:
-                break
+        async for data in receiver(self.receive):
             if self.func(data):
                 await self.send(data)
         await self.send(DATA_FINISH_MARKER)
@@ -113,14 +98,14 @@ class Tee(Proc, Actor):
         self.queue = asyncio.Queue(maxsize=1)
 
     async def main(self):
-        while True:
-            data = await self.receive()
-            if data is DATA_FINISH_MARKER:
-                await self.queue.put(DATA_FINISH_MARKER)
-                break
-            await self.queue.put(data)
-            await self.send(data)
-        await self.send(DATA_FINISH_MARKER)
+        async def send(data):
+            await asyncio.gather(
+                self.queue.put(data),
+                self.send(data),
+            )
+        async for data in receiver(self.receive):
+            await send(data)
+        await send(DATA_FINISH_MARKER)
 
     def start(self):
         self.other.getter = self.queue.get
@@ -133,9 +118,9 @@ class Tee(Proc, Actor):
 class List(Source, Actor):
     def __init__(self, data):
         super().__init__()
-        self.data = list(data)
+        self.data = data
 
     async def main(self):
-        while self.data:
-            await self.send(self.data.pop(0))
+        for element in self.data:
+            await self.send(element)
         await self.send(DATA_FINISH_MARKER)
