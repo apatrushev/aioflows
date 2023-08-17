@@ -4,6 +4,9 @@ import asyncio
 from cached_property import cached_property
 
 
+DATA_FINISH_MARKER = object()
+
+
 class ActorMeta(abc.ABCMeta):
     """Helper class to implement syntactic sugar for actors."""
     def __new__(cls, name, bases, dct):
@@ -62,6 +65,8 @@ class Actor(abc.ABC, metaclass=ActorMeta):
                 result = asyncio.ensure_future(result)
             if asyncio.isfuture(result):
                 result = await result
+            if data is DATA_FINISH_MARKER:
+                break
 
 
 class Sink:

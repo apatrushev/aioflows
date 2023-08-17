@@ -78,7 +78,7 @@ Run checks and tests:
 inv isort flake test
 ```
 
-Run examples (all ERRORCODE's should be 124 at the moment):
+Run examples (all ERRORCODE's should be 0/OK or 124/TIMEOUT at the moment):
 ```bash
 ls --color=never src/examples | grep -v attic | \
 while read l; do \

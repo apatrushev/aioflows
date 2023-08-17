@@ -4,7 +4,7 @@ import sys
 import aiomqtt
 
 from aioflows.mqtt import Subscriber
-from aioflows.simple import Applicator, Printer
+from aioflows.simple import Applicator, Null
 
 
 async def start(server='test.mosquitto.org', topic='#'):
@@ -12,7 +12,7 @@ async def start(server='test.mosquitto.org', topic='#'):
         flow = (
             Subscriber(client, topic=topic)
             >> Applicator(lambda x: (x.topic, x.payload))
-            >> Printer()
+            >> Null()
         )
         await flow.start()
 

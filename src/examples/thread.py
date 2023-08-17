@@ -2,11 +2,12 @@ import asyncio
 import functools
 import subprocess
 
+from aioflows.core import DATA_FINISH_MARKER
 from aioflows.simple import Applicator, Printer
 from aioflows.thread import Thread
 
 
-def shell_command(command, getter, putter):
+def shell_command(command, _, putter):
     proc = subprocess.Popen(
         command.split(),
         stdout=subprocess.PIPE,
@@ -17,6 +18,7 @@ def shell_command(command, getter, putter):
         if not line:
             break
         putter(line)
+    putter(DATA_FINISH_MARKER)
 
 
 async def start():
