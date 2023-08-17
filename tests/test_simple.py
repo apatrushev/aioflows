@@ -15,6 +15,7 @@ from aioflows.simple import (
     Tee,
     Ticker,
 )
+from aioflows.thread import Thread
 
 
 async def finalize():
@@ -81,3 +82,36 @@ async def test_ticker_counter_printer_finishing():
 
     await finalize()
     assert stream.getvalue() == '2\n6\n'
+
+
+@pytest.mark.asyncio
+async def test_thread_printer():
+    stream = io.StringIO()
+
+    def func(getter, putter):
+        while True:
+            data = getter()
+            if data == DATA_FINISH_MARKER:
+                break
+            print(data, file=stream)
+            putter(data)
+        putter(DATA_FINISH_MARKER)
+
+    pipeline = asyncio.create_task(
+        (
+            List('abc')
+            >> Thread(func)
+            >> Null()
+        ).start(),
+    )
+    await asyncio.wait(
+        (
+            pipeline,
+            asyncio.sleep(1),
+        ),
+        return_when=asyncio.FIRST_COMPLETED,
+    )
+    assert pipeline.done()
+
+    await finalize()
+    assert stream.getvalue() == 'a\nb\nc\n'
