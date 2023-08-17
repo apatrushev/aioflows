@@ -30,6 +30,7 @@ async def test_tee_filter_applicator_null_logger():
             >> Applicator(lambda x: x * 2)
             >> Applicator(double)
             >> Tee(Printer(stream))
+            >> Tee(Logger() >> Null())
             >> Tee(Logger())
             >> Null()
         ).start(),

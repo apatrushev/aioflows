@@ -138,3 +138,4 @@ class List(Source, Actor):
     async def main(self):
         while self.data:
             await self.send(self.data.pop(0))
+        await self.send(DATA_FINISH_MARKER)
