@@ -78,14 +78,9 @@ Run checks and tests:
 inv isort flake test
 ```
 
-Run examples (all ERRORCODE's should be 0/OK or 124/TIMEOUT at the moment):
+Run examples (all ERRORCODE's should be 0/OK or timeout at the moment):
 ```bash
-ls --color=never src/examples | grep -v attic | \
-while read l; do \
-    echo "EXECUTE: $l"; \
-    timeout 5 python src/examples/$l; \
-    echo "ERRORCODE: $?"; \
-done 2>&1 | grep ERRORCODE
+inv examples | grep ERRORCODE
 ```
 
 ## Similar projects
