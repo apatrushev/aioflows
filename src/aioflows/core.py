@@ -159,3 +159,6 @@ class Connector(Proc, Actor):
             self.left.start(),
             self.right.start(),
         )
+
+    def __repr__(self):
+        return f'{self.config.left} >> {self.config.right}'
