@@ -44,6 +44,9 @@ examples = [
     "requests",
     "zeroconf",
 ]
+release = [
+    "spherical-dev[release]>=0.3.0,<0.4",
+]
 
 [tool.setuptools_scm]
 
