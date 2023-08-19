@@ -12,7 +12,7 @@ class Ticker(Source, Actor):
         self.limit = limit
 
     async def main(self):
-        while self.limit:
+        while self.limit or self.limit is None:
             await self.send(None)
             await asyncio.sleep(self.timeout)
             if self.limit is not None:
