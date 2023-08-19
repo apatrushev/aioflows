@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 import logging
 import sys
 
@@ -75,6 +76,13 @@ class Applicator(Proc, Actor):
                     result = asyncio.ensure_future(result)
                 if asyncio.isfuture(result):
                     result = await result
+            if inspect.isasyncgen(result):
+                async for item in result:
+                    await self.send(item)
+            elif inspect.isgenerator(result):
+                for item in result:
+                    await self.send(item)
+            else:
                 await self.send(result)
         await self.send(DATA_FINISH_MARKER)
 
@@ -113,7 +121,7 @@ class Tee(Proc, Actor):
             self.other.start(),
             super().start(),
         )
-    
+
     def __repr__(self):
         return f'Tee({self.config.sink})'
 
