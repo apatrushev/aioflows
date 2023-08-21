@@ -80,7 +80,7 @@ class Logger(Proc, Actor):
         logger = logging.getLogger(self.config.logger)
         async for data in receiver(self.receive):
             logger.log(self.config.level, data)
-            await self.send(data)
+            await self.send(data, safe=True)
         await self.send(DATA_FINISH_MARKER)
 
 

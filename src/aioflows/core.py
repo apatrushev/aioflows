@@ -178,7 +178,15 @@ class Source:
 
 class Proc(Source, Sink):
     """Base class for Procs (both Sink and Source)."""
-    pass
+
+    def send(self, value, safe=False):
+        async def stub():
+            return None
+        return (
+            super().send(value)
+            if self.putter is not None or not safe else
+            stub()
+        )
 
 
 class Connector(Proc, Actor):
