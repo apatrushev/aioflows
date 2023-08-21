@@ -43,9 +43,7 @@ async def test_printer():
         return_when=asyncio.FIRST_COMPLETED,
     )
     assert [k.done() and k.exception() for x in result for k in x] == [None, False]
-
-    # we need this magic because we do not have
-    # proper cancellation of flows yet
+    await finalize()
 
 
 @pytest.mark.asyncio
@@ -75,8 +73,8 @@ async def test_tee_filter_applicator_null_logger():
         return_when=asyncio.FIRST_COMPLETED,
     )
     assert pipeline.done()
-
     await finalize()
+
     assert stream.getvalue() == '16\n24\n'
 
 
@@ -100,8 +98,8 @@ async def test_ticker_counter_printer_finishing():
         return_when=asyncio.FIRST_COMPLETED,
     )
     assert pipeline.done()
-
     await finalize()
+
     assert stream.getvalue() == '2\n6\n'
 
 
@@ -133,8 +131,8 @@ async def test_thread_printer():
         return_when=asyncio.FIRST_COMPLETED,
     )
     assert pipeline.done()
-
     await finalize()
+
     assert stream.getvalue() == 'a\nb\nc\n'
 
 
