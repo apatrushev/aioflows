@@ -1,5 +1,6 @@
 import asyncio
 import io
+import threading
 
 import pytest
 
@@ -112,14 +113,15 @@ async def test_thread_printer():
             data = getter()
             if data == DATA_FINISH_MARKER:
                 break
-            print(data, file=stream)
+            print(data, file=stream, flush=True)
             putter(data)
         putter(DATA_FINISH_MARKER)
+        print('FINISHED', file=stream, flush=True)
 
     pipeline = asyncio.create_task(
         (
             List(data='abc')
-            >> Thread(func=func)
+            >> Thread(name='ThreadActor', func=func)
             >> Null()
         ).start(),
     )
@@ -133,7 +135,8 @@ async def test_thread_printer():
     assert pipeline.done()
     await finalize()
 
-    assert stream.getvalue() == 'a\nb\nc\n'
+    assert stream.getvalue() == 'a\nb\nc\nFINISHED\n'
+    assert not [x for x in threading.enumerate() if x.name == 'ThreadActor']
 
 
 def test_positional_argument_exception():
