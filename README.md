@@ -1,38 +1,8 @@
 # aioflows
-[![Project Status: Concept – Minimal or no implementation has been done yet, or the repository is only intended to be a limited example, demo, or proof-of-concept.](https://www.repostatus.org/badges/latest/concept.svg)](https://www.repostatus.org/#concept)
+[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
+[![PyPI](https://img.shields.io/pypi/v/aioflows)](https://pypi.org/project/aioflows/)
 
 This project aims to implement a helper library for building asynchronous applications in Python, based on the concept of structured data flows and actors. The current stage is pure proof-of-concept and basis for discussion with colleagues and community. It is not intended to be used in any production or even pet projects.
-
-## Installation
- - local
-```bash
-pip install .
-```
-
- - editable
-```bash
-pip install -e .
-```
-
- - development
-```bash
-pip install -e .[dev]
-```
-
- - examples dependencies
-```bash
-pip install -e .[examples]
-```
-
- - all together
-```bash
-pip install -e .[dev,examples]
-```
-
- - from github
-```bash
-pip install git+https://github.com/apatrushev/aioflows.git
-```
 
 ## Minimal working example
 ```python
@@ -71,6 +41,37 @@ socat - UDP:localhost:5353
 
 ## Other examples
 More examples can be found in [src/examples](https://github.com/apatrushev/aioflows/tree/master/src/examples).
+
+## Installation
+ - local
+```bash
+pip install .
+```
+
+ - editable
+```bash
+pip install -e .
+```
+
+ - development
+```bash
+pip install -e .[dev]
+```
+
+ - examples dependencies
+```bash
+pip install -e .[examples]
+```
+
+ - all together
+```bash
+pip install -e .[dev,examples]
+```
+
+ - from github
+```bash
+pip install git+https://github.com/apatrushev/aioflows.git
+```
 
 ## Usual development steps
 Run checks and tests:
