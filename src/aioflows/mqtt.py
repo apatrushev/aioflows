@@ -9,11 +9,7 @@ class Subscriber(Source, Actor):
     @dataclasses.dataclass
     class Options:
         topic: str = '#'
-        '''Execute function in seperate thread.
-
-        This option is usefull for io-bound tasks to be offloaded from main
-        asyncio thread to avoid blocking.
-        '''
+        '''MQTT topic to be used by subscriber.'''
 
     @dataclasses.dataclass
     class Arguments(Options):

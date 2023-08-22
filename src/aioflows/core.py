@@ -194,7 +194,7 @@ class Connector(Proc, Actor):
 
     Main class implementing the libary idea of actors connection.
     During startup it creates asyncio.Queue and connects it to legs.
-    Also it implements magic to connect getter nad putter to outside.
+    Also it implements magic to connect getter and putter to outside.
     asyncio.Queue instantiated with maxsize=1.
     If you need interim buffering between actors - you need to use
     buffering actor between them otherwise left actor will be locked
