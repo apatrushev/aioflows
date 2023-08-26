@@ -28,6 +28,12 @@ classifiers = [
     "Framework :: AsyncIO",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python",
     "Topic :: Software Development :: Libraries",
 ]
@@ -47,6 +53,10 @@ examples = [
 release = [
     "spherical-dev[release]>=0.3.0,<0.4",
 ]
+
+[project.urls]
+"Source" = "https://github.com/apatrushev/aioflows"
+"Tracker" = "https://github.com/apatrushev/aioflows/issues"
 
 [tool.setuptools_scm]
 

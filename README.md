@@ -1,8 +1,18 @@
 # aioflows
-[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
-[![PyPI](https://img.shields.io/pypi/v/aioflows)](https://pypi.org/project/aioflows/)
+![Github Actions](https://github.com/apatrushev/aioflows/workflows/Spherical%20Python%20CI/badge.svg)
+[![PyPI](https://img.shields.io/pypi/v/aioflows?logo=python&logoColor=%23cccccc)](https://pypi.org/project/aioflows)
 
-This project aims to implement a helper library for building asynchronous applications in Python, based on the concept of structured data flows and actors. The current stage is pure proof-of-concept and basis for discussion with colleagues and community. It is not intended to be used in any production or even pet projects.
+<p>Asynchronous actors framework</p>
+
+---
+
+**Documentation**: <a href="https://aioflows.github.io" target="_blank">https://aioflows.github.io</a>
+
+**Source**: <a href="https://github.com/apatrushev/aioflows" target="_blank">https://github.com/apatrushev/aioflows</a>
+
+---
+This project aims to create a support library for constructing asynchronous applications in Python, using the concept of structured data flows and actors. The current phase is purely a proof-of-concept and serves as a basis for discussion with colleagues and the community. It is not intended for use in any production or personal projects.
+
 
 ## Minimal working example
 ```python
