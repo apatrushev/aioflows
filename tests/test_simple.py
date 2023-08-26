@@ -149,3 +149,41 @@ def test_pinit_in_actor_exception():
         class Some(Actor):
             def __init__(self):
                 pass
+
+
+@pytest.mark.asyncio
+async def test_appicator_generator():
+    stream = io.StringIO()
+
+    def func(getter, putter):
+        while True:
+            data = getter()
+            if data == DATA_FINISH_MARKER:
+                break
+            print(data, file=stream, flush=True)
+            putter(data)
+        putter(DATA_FINISH_MARKER)
+        print('FINISHED', file=stream, flush=True)
+
+    def generate(x):
+        for i in range(x):
+            yield i
+
+    pipeline = asyncio.create_task(
+        (
+            List(data=[1, 2, 3])
+            >> Applicator(func=generate)
+            >> Printer(stream=stream)
+        ).start(),
+    )
+    await asyncio.wait(
+        (
+            pipeline,
+            asyncio.sleep(1),
+        ),
+        return_when=asyncio.FIRST_COMPLETED,
+    )
+    assert pipeline.done()
+    await finalize()
+
+    assert stream.getvalue() == '0\n0\n1\n0\n1\n2\n'

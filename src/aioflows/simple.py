@@ -110,20 +110,24 @@ class Applicator(Proc, Actor):
                     self.config.func,
                     data,
                 )
+                await self.send(result)
             else:
                 result = self.config.func(data)
-                if asyncio.iscoroutine(result):
+                if (
+                    asyncio.iscoroutine(result)
+                    and not inspect.isgenerator(result)
+                ):
                     result = asyncio.ensure_future(result)
                 if asyncio.isfuture(result):
                     result = await result
-            if inspect.isasyncgen(result):
-                async for item in result:
-                    await self.send(item)
-            elif inspect.isgenerator(result):
-                for item in result:
-                    await self.send(item)
-            else:
-                await self.send(result)
+                if inspect.isasyncgen(result):
+                    async for item in result:
+                        await self.send(item)
+                elif inspect.isgenerator(result):
+                    for item in result:
+                        await self.send(item)
+                else:
+                    await self.send(result)
         await self.send(DATA_FINISH_MARKER)
 
 
