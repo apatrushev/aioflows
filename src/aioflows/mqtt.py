@@ -20,4 +20,5 @@ class Subscriber(Source, Actor):
         async with self.config.client.messages() as messages:
             await self.config.client.subscribe(self.config.topic)
             async for message in messages:
-                await self.send(message)
+                if message.topic.matches(self.config.topic):
+                    await self.send(message)
