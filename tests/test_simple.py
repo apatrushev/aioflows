@@ -12,6 +12,7 @@ from aioflows.core import (
 )
 from aioflows.simple import (
     Applicator,
+    Batcher,
     Counter,
     Filter,
     List,
@@ -118,11 +119,14 @@ async def test_thread_printer():
         putter(DATA_FINISH_MARKER)
         print('FINISHED', file=stream, flush=True)
 
+    stream_out = io.StringIO()
     pipeline = asyncio.create_task(
         (
             List(data='abc')
             >> Thread(name='ThreadActor', func=func)
-            >> Null()
+            >> Batcher(size=2)
+            >> Applicator(func=lambda x: ''.join(x))
+            >> Printer(stream=stream_out)
         ).start(),
     )
     await asyncio.wait(
@@ -136,6 +140,7 @@ async def test_thread_printer():
     await finalize()
 
     assert stream.getvalue() == 'a\nb\nc\nFINISHED\n'
+    assert stream_out.getvalue() == 'ab\nc\n'
     assert not [x for x in threading.enumerate() if x.name == 'ThreadActor']
 
 

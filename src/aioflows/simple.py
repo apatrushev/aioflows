@@ -103,9 +103,29 @@ class Applicator(Proc, Actor):
     class Arguments(Options):
         func: Callable[[Any], Any] = None
         '''Function to be applied on events.'''
-    
+
     def func(self, data):
         return self.config.func(data)
+
+    def finish(self):
+        return APPLICATOR_IGNORE
+
+    async def process(self, result):
+        if (
+            asyncio.iscoroutine(result)
+            and not inspect.isgenerator(result)
+        ):
+            result = asyncio.ensure_future(result)
+        if asyncio.isfuture(result):
+            result = await result
+        if inspect.isasyncgen(result):
+            async for item in result:
+                await self.send(item)
+        elif inspect.isgenerator(result):
+            for item in result:
+                await self.send(item)
+        elif result is not APPLICATOR_IGNORE:
+            await self.send(result)
 
     async def main(self):
         async for data in receiver(self.receive):
@@ -115,21 +135,9 @@ class Applicator(Proc, Actor):
                 await self.send(result)
             else:
                 result = self.func(data)
-                if (
-                    asyncio.iscoroutine(result)
-                    and not inspect.isgenerator(result)
-                ):
-                    result = asyncio.ensure_future(result)
-                if asyncio.isfuture(result):
-                    result = await result
-                if inspect.isasyncgen(result):
-                    async for item in result:
-                        await self.send(item)
-                elif inspect.isgenerator(result):
-                    for item in result:
-                        await self.send(item)
-                elif result is not APPLICATOR_IGNORE:
-                    await self.send(result)
+                await self.process(result)
+        result = self.finish()
+        await self.process(result)
         await self.send(DATA_FINISH_MARKER)
 
 
@@ -184,3 +192,29 @@ class List(Source, Actor):
         for element in self.config.data:
             await self.send(element)
         await self.send(DATA_FINISH_MARKER)
+
+
+class Batcher(Applicator):
+    """Interim actor batching events into lists."""
+
+    batch: list = None
+
+    @dataclasses.dataclass
+    class Options(Applicator.Options):
+        size: int = None
+        '''Size of batch to be produced.'''
+
+    def func(self, data):
+        if self.batch is None:
+            self.batch = []
+        self.batch.append(data)
+        result = APPLICATOR_IGNORE
+        if len(self.batch) == self.config.size:
+            self.batch, result = None, self.batch
+        return result
+
+    def finish(self):
+        result = APPLICATOR_IGNORE
+        if self.batch:
+            result, self.batch = self.batch, None
+        return result
