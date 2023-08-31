@@ -8,7 +8,6 @@ def test_options_null():
 def test_options_list():
     options = List().options
     assert len(options) == 1
-    assert options[0]['title'] == 'List[Options]'
     props = options[0]['properties']
     assert len(props) == 1
     assert props['data']['type'] == 'array'

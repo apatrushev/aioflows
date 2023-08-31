@@ -1,5 +1,6 @@
 import abc
 import asyncio
+import copy
 import dataclasses
 
 import pydantic
@@ -119,15 +120,22 @@ class Actor(abc.ABC, metaclass=ActorMeta):
     def options(self):
         if hasattr(self, 'Options'):
             options = pydantic.tools.schema_of(self.Options)
-            options.pop('$ref', None)
-            definitions = options.pop('definitions', None)
-            if definitions is not None:
-                options['properties'] = definitions['Options']['properties']
-            for k, v in options['properties'].items():
-                v['default'] = getattr(self.config, k)
-            options['title'] = f'{self.__class__.__name__}[Options]'
-            return (options,)
+            return (self.options_cleanup(options, self),)
         return ()
+
+    @staticmethod
+    def options_cleanup(options, obj=None):
+        options = copy.deepcopy(options)
+        options.pop('$ref', None)
+        options.pop('type', None)
+        options.pop('title', None)
+        definitions = options.pop('definitions', None)
+        if definitions is not None:
+            options['properties'] = definitions['Options']['properties']
+        for k, v in options['properties'].items():
+            if obj is not None and hasattr(obj.config, k):
+                v['default'] = getattr(obj.config, k)
+        return options
 
     @staticmethod
     async def mover(getter, putter):
