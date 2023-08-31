@@ -19,6 +19,7 @@ from aioflows.simple import (
     Logger,
     Null,
     Printer,
+    Producer,
     Tee,
     Ticker,
 )
@@ -39,13 +40,18 @@ async def test_printer():
     stream = io.StringIO()
     result = await asyncio.wait(
         (
-            (List(data=[1, 2, 3]) >> Printer(stream=stream)).start(),
+            (
+                Producer(func=lambda: (x for x in range(3)))
+                >> Printer(stream=stream)
+            ).start(),
             asyncio.sleep(0.01),
         ),
         return_when=asyncio.FIRST_COMPLETED,
     )
     assert [k.done() and k.exception() for x in result for k in x] == [None, False]
     await finalize()
+
+    assert stream.getvalue() == '0\n1\n2\n'
 
 
 @pytest.mark.asyncio

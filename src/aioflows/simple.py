@@ -218,3 +218,34 @@ class Batcher(Applicator):
         if self.batch:
             result, self.batch = self.batch, None
         return result
+
+
+class Producer(Source, Actor):
+    """Source actor producing events from provided function."""
+
+    @dataclasses.dataclass
+    class Arguments:
+        func: Callable[[], Any] = None
+        '''Function to be called to produce events.'''
+
+    def func(self):
+        return self.config.func()
+
+    async def main(self):
+        result = self.func()
+        if (
+            asyncio.iscoroutine(result)
+            and not inspect.isgenerator(result)
+        ):
+            result = asyncio.ensure_future(result)
+        if asyncio.isfuture(result):
+            result = await result
+        if inspect.isasyncgen(result):
+            async for item in result:
+                await self.send(item)
+        elif inspect.isgenerator(result):
+            for item in result:
+                await self.send(item)
+        elif result is not APPLICATOR_IGNORE:
+            await self.send(result)
+        await self.send(DATA_FINISH_MARKER)
