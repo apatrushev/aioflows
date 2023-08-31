@@ -119,9 +119,13 @@ class Actor(abc.ABC, metaclass=ActorMeta):
     def options(self):
         if hasattr(self, 'Options'):
             options = pydantic.tools.schema_of(self.Options)
-            props = options['definitions']['Options']['properties']
-            for k, v in props.items():
+            options.pop('$ref', None)
+            definitions = options.pop('definitions', None)
+            if definitions is not None:
+                options['properties'] = definitions['Options']['properties']
+            for k, v in options['properties'].items():
                 v['default'] = getattr(self.config, k)
+            options['title'] = f'{self.__class__.__name__}[Options]'
             return (options,)
         return ()
 
