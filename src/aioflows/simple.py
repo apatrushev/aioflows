@@ -100,19 +100,18 @@ class Applicator(Proc, Actor):
     class Arguments(Options):
         func: Callable[[Any], Any] = None
         '''Function to be applied on events.'''
+    
+    def func(self, data):
+        return self.config.func(data)
 
     async def main(self):
         async for data in receiver(self.receive):
             if self.config.thread:
                 loop = asyncio.get_running_loop()
-                result = await loop.run_in_executor(
-                    None,
-                    self.config.func,
-                    data,
-                )
+                result = await loop.run_in_executor(None, self.func, data)
                 await self.send(result)
             else:
-                result = self.config.func(data)
+                result = self.func(data)
                 if (
                     asyncio.iscoroutine(result)
                     and not inspect.isgenerator(result)
