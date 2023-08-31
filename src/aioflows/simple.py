@@ -8,6 +8,9 @@ from typing import Any, Callable, Optional, TextIO
 from .core import DATA_FINISH_MARKER, Actor, Proc, Sink, Source, receiver
 
 
+APPLICATOR_IGNORE = object()
+
+
 class Ticker(Source, Actor):
     """Source actor of regular time based events."""
 
@@ -125,24 +128,16 @@ class Applicator(Proc, Actor):
                 elif inspect.isgenerator(result):
                     for item in result:
                         await self.send(item)
-                else:
+                elif result is not APPLICATOR_IGNORE:
                     await self.send(result)
         await self.send(DATA_FINISH_MARKER)
 
 
-class Filter(Proc, Actor):
+class Filter(Applicator):
     """Interim actor filtering events with predicate."""
 
-    @dataclasses.dataclass
-    class Arguments:
-        func: Callable[[Any], bool]
-        '''Function to be applied on events.'''
-
-    async def main(self):
-        async for data in receiver(self.receive):
-            if self.config.func(data):
-                await self.send(data)
-        await self.send(DATA_FINISH_MARKER)
+    def func(self, data):
+        return data if self.config.func(data) else APPLICATOR_IGNORE
 
 
 class Tee(Proc, Actor):
