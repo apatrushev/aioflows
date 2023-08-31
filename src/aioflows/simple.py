@@ -104,6 +104,9 @@ class Applicator(Proc, Actor):
         func: Callable[[Any], Any] = None
         '''Function to be applied on events.'''
 
+        options: bool = True
+        '''Whether to yield options.'''
+
     def func(self, data):
         return self.config.func(data)
 
@@ -139,6 +142,10 @@ class Applicator(Proc, Actor):
         result = self.finish()
         await self.process(result)
         await self.send(DATA_FINISH_MARKER)
+
+    @property
+    def options(self):
+        return super().options if self.config.options else ()
 
 
 class Filter(Applicator):
