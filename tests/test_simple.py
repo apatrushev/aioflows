@@ -152,16 +152,6 @@ def test_pinit_in_actor_exception():
 async def test_appicator_generator():
     stream = io.StringIO()
 
-    def func(getter, putter):
-        while True:
-            data = getter()
-            if data == DATA_FINISH_MARKER:
-                break
-            print(data, file=stream, flush=True)
-            putter(data)
-        putter(DATA_FINISH_MARKER)
-        print('FINISHED', file=stream, flush=True)
-
     def generate(x):
         for i in range(x):
             yield i
