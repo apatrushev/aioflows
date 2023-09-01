@@ -268,3 +268,32 @@ class Producer(Source, Actor):
         elif result is not APPLICATOR_IGNORE:
             await self.send(result)
         await self.send(DATA_FINISH_MARKER)
+
+
+class Repeat(Proc, Actor):
+    """Interim actor repeating single event."""
+
+    async def main(self):
+        result = [x async for x in receiver(self.receive)]
+        result, = result
+        while True:
+            await self.send(result)
+
+
+class Take(Applicator):
+    """Interim actor taking first N events."""
+
+    @dataclasses.dataclass
+    class Options(Applicator.Options):
+        limit: int = None
+        '''Number of events to be taken.'''
+
+    limit: int = None
+
+    def func(self, data):
+        if self.limit is None:
+            self.limit = self.config.limit
+        if not self.limit:
+            return DATA_FINISH_MARKER
+        self.limit -= 1
+        return data

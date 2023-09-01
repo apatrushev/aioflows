@@ -20,6 +20,8 @@ from aioflows.simple import (
     Null,
     Printer,
     Producer,
+    Repeat,
+    Take,
     Tee,
     Ticker,
 )
@@ -172,3 +174,18 @@ async def test_appicator_generator():
     await execute(pipeline)
 
     assert stream.getvalue() == '0\n0\n1\n0\n1\n2\n'
+
+
+@pytest.mark.asyncio
+async def test_repeat():
+    stream = io.StringIO()
+
+    pipeline = (
+        List(data='a')
+        >> Repeat()
+        >= Take(limit=2)
+        >> Printer(stream=stream)
+    )
+    await execute(pipeline)
+
+    assert stream.getvalue() == 'a\na\n'
