@@ -287,8 +287,8 @@ class Connector(Proc, Actor):
 
     async def main(self):
         """Overrides main Actor flow to await both legs."""
-        left = asyncio.create_task(self.config.left.start())
-        right = asyncio.create_task(self.config.right.start())
+        left = asyncio.ensure_future(self.config.left.start())
+        right = asyncio.ensure_future(self.config.right.start())
         done, pending = await asyncio.wait(
             (left, right),
             return_when=asyncio.FIRST_COMPLETED,
