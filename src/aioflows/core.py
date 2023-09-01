@@ -2,9 +2,9 @@ import abc
 import asyncio
 import copy
 import dataclasses
+import functools
 
 import pydantic
-from cached_property import cached_property
 
 
 DATA_FINISH_MARKER = object()
@@ -20,6 +20,19 @@ async def receiver(receive):
         if data == DATA_FINISH_MARKER:
             break
         yield data
+
+
+def main_cacher(func):
+    """Helper function to cache actor main function."""
+
+    async def wrapper(self):
+        result = await func(self)
+        self.__dict__['main'] = result
+        return result
+
+    wrapper = functools.update_wrapper(wrapper, func)
+
+    return property(wrapper)
 
 
 class ActorSyntaxError(RuntimeError):
@@ -61,10 +74,10 @@ class ActorMeta(abc.ABCMeta):
                     bases=(dct['Options'],),
                 )
             )
-        if 'main' in dct and not isinstance(dct['main'], cached_property):
+        if 'main' in dct:
             # automatically wraps actors main to cached property
             # to avoid multiple calls and use it in cancellation
-            dct['main'] = cached_property(dct['main'])
+            dct['main'] = main_cacher(dct['main'])
         instance = super().__new__(cls, name, bases, dct)
         return instance
 
@@ -90,13 +103,12 @@ class Actor(abc.ABC, metaclass=ActorMeta):
     def start(self):
         return self.main
 
-    @cached_property
     @abc.abstractmethod
     async def main(self):
         """Main actor function.
 
         Should be implemented in actor to do its job. This method
-        automatically wrapped to cached_property by ActorMeta to
+        automatically wrapped to main_cacher by ActorMeta to
         avoid multiple calls of actor main function.
         """
         pass

@@ -12,13 +12,10 @@ description = "Python data flows library to build structured applications"
 readme = {file = "README.md", content-type = "text/markdown"}
 license = {text = "MIT"}
 
-# upper bound required due to the problem in cached-property
-# https://github.com/pydanny/cached-property/pull/267
-requires-python = ">=3.8,<3.11"
+requires-python = ">=3.8"
 dynamic = ["version"]
 
 dependencies = [
-    "cached-property",
     "janus",
     "pydantic<2",
 ]
@@ -30,9 +27,10 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python",
     "Topic :: Software Development :: Libraries",
