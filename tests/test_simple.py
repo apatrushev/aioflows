@@ -39,13 +39,13 @@ async def finalize():
 async def test_printer():
     stream = io.StringIO()
     result = await asyncio.wait(
-        (
+        list(map(asyncio.ensure_future, (
             (
                 Producer(func=lambda: (x for x in range(3)))
                 >> Printer(stream=stream)
             ).start(),
             asyncio.sleep(0.01),
-        ),
+        ))),
         return_when=asyncio.FIRST_COMPLETED,
     )
     assert [k.done() and k.exception() for x in result for k in x] == [None, False]
@@ -54,34 +54,37 @@ async def test_printer():
     assert stream.getvalue() == '0\n1\n2\n'
 
 
+async def execute(pipeline):
+    pipeline = asyncio.create_task(pipeline.start())
+    await asyncio.wait(
+        (
+            pipeline,
+            asyncio.ensure_future(asyncio.sleep(1)),
+        ),
+        return_when=asyncio.FIRST_COMPLETED,
+    )
+    assert pipeline.done()
+    await finalize()
+
+
 @pytest.mark.asyncio
 async def test_tee_filter_applicator_null_logger():
     async def double(x):
         return x * 2
 
     stream = io.StringIO()
-    pipeline = asyncio.create_task(
-        (
-            List(data=[1, 2, 3])
-            >> Filter(func=lambda x: x > 1)
-            >> Applicator(func=lambda x: x * 2, thread=True)
-            >> Applicator(func=lambda x: x * 2)
-            >> Applicator(func=double)
-            >> Tee(sink=(Printer(stream=stream)))
-            >> Tee(sink=(Logger() >> Null()))
-            >> Tee(sink=Logger())
-            >> Null()
-        ).start(),
+    pipeline = (
+        List(data=[1, 2, 3])
+        >> Filter(func=lambda x: x > 1)
+        >> Applicator(func=lambda x: x * 2, thread=True)
+        >> Applicator(func=lambda x: x * 2)
+        >> Applicator(func=double)
+        >> Tee(sink=(Printer(stream=stream)))
+        >> Tee(sink=(Logger() >> Null()))
+        >> Tee(sink=Logger())
+        >> Null()
     )
-    await asyncio.wait(
-        (
-            pipeline,
-            asyncio.sleep(1),
-        ),
-        return_when=asyncio.FIRST_COMPLETED,
-    )
-    assert pipeline.done()
-    await finalize()
+    await execute(pipeline)
 
     assert stream.getvalue() == '16\n24\n'
 
@@ -89,24 +92,15 @@ async def test_tee_filter_applicator_null_logger():
 @pytest.mark.asyncio
 async def test_ticker_counter_printer_finishing():
     stream = io.StringIO()
-    pipeline = asyncio.create_task(
-        (
-            Ticker(timeout=0.01, limit=5)
-            >> Counter()
-            >> Filter(func=lambda x: x % 2)
-            >> Applicator(func=lambda x: x * 2)
-            >> Printer(stream=stream)
-        ).start(),
+
+    pipeline = (
+        Ticker(timeout=0.01, limit=5)
+        >> Counter()
+        >> Filter(func=lambda x: x % 2)
+        >> Applicator(func=lambda x: x * 2)
+        >> Printer(stream=stream)
     )
-    await asyncio.wait(
-        (
-            pipeline,
-            asyncio.sleep(1),
-        ),
-        return_when=asyncio.FIRST_COMPLETED,
-    )
-    assert pipeline.done()
-    await finalize()
+    await execute(pipeline)
 
     assert stream.getvalue() == '2\n6\n'
 
@@ -126,24 +120,14 @@ async def test_thread_printer():
         print('FINISHED', file=stream, flush=True)
 
     stream_out = io.StringIO()
-    pipeline = asyncio.create_task(
-        (
-            List(data='abc')
-            >> Thread(name='ThreadActor', func=func)
-            >> Batcher(size=2)
-            >> Applicator(func=lambda x: ''.join(x))
-            >> Printer(stream=stream_out)
-        ).start(),
+    pipeline = (
+        List(data='abc')
+        >> Thread(name='ThreadActor', func=func)
+        >> Batcher(size=2)
+        >> Applicator(func=lambda x: ''.join(x))
+        >> Printer(stream=stream_out)
     )
-    await asyncio.wait(
-        (
-            pipeline,
-            asyncio.sleep(1),
-        ),
-        return_when=asyncio.FIRST_COMPLETED,
-    )
-    assert pipeline.done()
-    await finalize()
+    await execute(pipeline)
 
     assert stream.getvalue() == 'a\nb\nc\nFINISHED\n'
     assert stream_out.getvalue() == 'ab\nc\n'
@@ -180,21 +164,11 @@ async def test_appicator_generator():
         for i in range(x):
             yield i
 
-    pipeline = asyncio.create_task(
-        (
-            List(data=[1, 2, 3])
-            >> Applicator(func=generate)
-            >> Printer(stream=stream)
-        ).start(),
+    pipeline = (
+        List(data=[1, 2, 3])
+        >> Applicator(func=generate)
+        >> Printer(stream=stream)
     )
-    await asyncio.wait(
-        (
-            pipeline,
-            asyncio.sleep(1),
-        ),
-        return_when=asyncio.FIRST_COMPLETED,
-    )
-    assert pipeline.done()
-    await finalize()
+    await execute(pipeline)
 
     assert stream.getvalue() == '0\n0\n1\n0\n1\n2\n'
