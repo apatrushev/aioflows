@@ -128,6 +128,22 @@ class Actor(abc.ABC, metaclass=ActorMeta):
         """
         return Connector(left=self, right=other)
 
+    def __ge__(self, other):
+        """Connect actors.
+
+        Creates new Actor representing connection of arguments.
+        Cancel left actor if right one is finished.
+
+        Args:
+            other: right hand side Actor to join
+
+        Returns:
+            A new Actor representing connected flow of join
+            operation arguments. Can be used in further join
+            operations or started alone if completed.
+        """
+        return Connector(left=self, right=other, cancel=True)
+
     @property
     def options(self):
         if hasattr(self, 'Options'):
@@ -229,6 +245,7 @@ class Connector(Proc, Actor):
     class Arguments:
         left: Source
         right: Sink
+        cancel: bool = False
 
     @property
     def putter(self):
@@ -270,10 +287,17 @@ class Connector(Proc, Actor):
 
     async def main(self):
         """Overrides main Actor flow to await both legs."""
-        await asyncio.gather(
-            self.config.left.start(),
-            self.config.right.start(),
+        left = asyncio.create_task(self.config.left.start())
+        right = asyncio.create_task(self.config.right.start())
+        done, pending = await asyncio.wait(
+            (left, right),
+            return_when=asyncio.FIRST_COMPLETED,
         )
+        if pending:
+            pending, = pending
+            if self.config.cancel:
+                pending.cancel()
+            await pending
 
     def __repr__(self):
         return f'{self.config.left} >> {self.config.right}'

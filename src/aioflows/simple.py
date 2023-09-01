@@ -123,24 +123,36 @@ class Applicator(Proc, Actor):
             result = await result
         if inspect.isasyncgen(result):
             async for item in result:
+                if item is DATA_FINISH_MARKER:
+                    return True
                 await self.send(item)
         elif inspect.isgenerator(result):
             for item in result:
+                if item is DATA_FINISH_MARKER:
+                    return True
                 await self.send(item)
+        elif result is DATA_FINISH_MARKER:
+            return True
         elif result is not APPLICATOR_IGNORE:
             await self.send(result)
+        return False
 
     async def main(self):
+        exit = False
         async for data in receiver(self.receive):
             if self.config.thread:
                 loop = asyncio.get_running_loop()
                 result = await loop.run_in_executor(None, self.func, data)
                 await self.send(result)
+                exit = (result is DATA_FINISH_MARKER)
             else:
                 result = self.func(data)
-                await self.process(result)
-        result = self.finish()
-        await self.process(result)
+                exit = await self.process(result)
+            if exit:
+                break
+        if not exit:
+            result = self.finish()
+            await self.process(result)
         await self.send(DATA_FINISH_MARKER)
 
     @property
