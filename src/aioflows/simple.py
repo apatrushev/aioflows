@@ -223,6 +223,10 @@ class Batcher(Applicator):
         size: int = None
         '''Size of batch to be produced.'''
 
+    @dataclasses.dataclass
+    class Arguments(Options, Applicator.Arguments):
+        pass
+
     def func(self, data):
         if self.batch is None:
             self.batch = []
@@ -287,6 +291,10 @@ class Take(Applicator):
     class Options(Applicator.Options):
         limit: int = None
         '''Number of events to be taken.'''
+
+    @dataclasses.dataclass
+    class Arguments(Options, Applicator.Arguments):
+        pass
 
     limit: int = None
 
