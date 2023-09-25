@@ -251,8 +251,22 @@ class Producer(Source, Actor):
         func: Callable[[], Any] = None
         '''Function to be called to produce events.'''
 
-    def func(self):
-        return self.config.func()
+    async def func(self):
+        if (
+            isinstance(self.config.func, range)
+            or inspect.isgenerator(self.config.func)
+            or inspect.isasyncgen(self.config.func)
+        ):
+            return self.config.func
+        result = self.config.func()
+        if (
+            asyncio.iscoroutine(result)
+            and not inspect.isgenerator(result)
+        ):
+            result = asyncio.ensure_future(result)
+        if asyncio.isfuture(result):
+            result = await result
+        return result
 
     async def main(self):
         result = self.func()
