@@ -67,6 +67,7 @@ async def execute(pipeline):
     )
     assert pipeline.done()
     await finalize()
+    return pipeline.result()
 
 
 @pytest.mark.asyncio
@@ -81,9 +82,8 @@ async def test_tee_filter_applicator_null_logger():
         >> Applicator(func=lambda x: x * 2, thread=True)
         >> Applicator(func=lambda x: x * 2)
         >> Applicator(func=double)
-        >> Tee(sink=(Printer(stream=stream)))
+        >> Tee(sink=Printer(stream=stream))
         >> Tee(sink=(Logger() >> Null()))
-        >> Tee(sink=Logger())
         >> Null()
     )
     await execute(pipeline)
@@ -179,3 +179,20 @@ async def test_repeat():
     await execute(pipeline)
 
     assert stream.getvalue() == 'a\na\n'
+
+
+@pytest.mark.asyncio
+async def test_applicator_exception():
+    stream = io.StringIO()
+
+    pipeline = (
+        Ticker(limit=2, timeout=0.01)
+        >> Counter()
+        >> Applicator(func=lambda x: 1 - x)
+        >> Applicator(func=lambda x: 1 / x)
+        >> Printer(stream=stream)
+    )
+    with pytest.raises(ZeroDivisionError):
+        await execute(pipeline)
+
+    assert stream.getvalue() == '1.0\n'

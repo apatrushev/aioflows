@@ -57,7 +57,7 @@ class Printer(Sink, Actor):
 
     async def main(self):
         async for data in receiver(self.receive):
-            print(data, file=self.config.stream)
+            print(data, file=self.config.stream, flush=True)
 
 
 class Null(Sink, Actor):

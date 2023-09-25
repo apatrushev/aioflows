@@ -294,10 +294,18 @@ class Connector(Proc, Actor):
             return_when=asyncio.FIRST_COMPLETED,
         )
         if pending:
-            pending, = pending
+            (done,), (pending,) = done, pending
+            if done.exception():
+                pending.cancel()
             if self.config.cancel:
                 pending.cancel()
-            await pending
+            try:
+                await pending
+            except asyncio.CancelledError:
+                pass
+            done.result()
+        else:
+            [x.result() for x in done]
 
     def __repr__(self):
         return f'{self.config.left} >> {self.config.right}'
