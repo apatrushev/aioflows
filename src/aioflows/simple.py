@@ -341,7 +341,7 @@ class Consumer(Sink, Actor):
         if inspect.isasyncgen(result):
             async def inner(msg):
                 await result.asend(msg)
-            await anext(result)
+            await result.__anext__()
             self.func = inner
         elif inspect.isgenerator(result):
             async def inner(msg):
