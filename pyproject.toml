@@ -49,7 +49,7 @@ examples = [
     "zeroconf",
 ]
 release = [
-    "spherical-dev[release]>=0.3.0,<0.4",
+    "spherical-dev[release]>=0.3.4,<0.4",
 ]
 
 [project.urls]
