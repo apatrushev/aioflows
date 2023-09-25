@@ -19,7 +19,6 @@ from aioflows.simple import (
     Logger,
     Null,
     Printer,
-    Producer,
     Repeat,
     Take,
     Tee,
@@ -28,22 +27,13 @@ from aioflows.simple import (
 from aioflows.thread import Thread
 
 
-async def finalize():
-    tasks = []
-    for task in asyncio.tasks.all_tasks():
-        if task is not asyncio.current_task():
-            task.cancel()
-            tasks.append(task)
-    await asyncio.wait(tasks)
-
-
 @pytest.mark.asyncio
-async def test_printer():
+async def test_printer(helpers):
     stream = io.StringIO()
     result = await asyncio.wait(
         list(map(asyncio.ensure_future, (
             (
-                Producer(func=lambda: (x for x in range(3)))
+                List(data=[0, 1, 2])
                 >> Printer(stream=stream)
             ).start(),
             asyncio.sleep(0.01),
@@ -51,27 +41,13 @@ async def test_printer():
         return_when=asyncio.FIRST_COMPLETED,
     )
     assert [k.done() and k.exception() for x in result for k in x] == [None, False]
-    await finalize()
+    await helpers.finalize()
 
     assert stream.getvalue() == '0\n1\n2\n'
 
 
-async def execute(pipeline):
-    pipeline = asyncio.create_task(pipeline.start())
-    await asyncio.wait(
-        (
-            pipeline,
-            asyncio.ensure_future(asyncio.sleep(1)),
-        ),
-        return_when=asyncio.FIRST_COMPLETED,
-    )
-    assert pipeline.done()
-    await finalize()
-    return pipeline.result()
-
-
 @pytest.mark.asyncio
-async def test_tee_filter_applicator_null_logger():
+async def test_tee_filter_applicator_null_logger(helpers):
     async def double(x):
         return x * 2
 
@@ -86,13 +62,13 @@ async def test_tee_filter_applicator_null_logger():
         >> Tee(sink=(Logger() >> Null()))
         >> Null()
     )
-    await execute(pipeline)
+    await helpers.execute(pipeline)
 
     assert stream.getvalue() == '16\n24\n'
 
 
 @pytest.mark.asyncio
-async def test_ticker_counter_printer_finishing():
+async def test_ticker_counter_printer_finishing(helpers):
     stream = io.StringIO()
 
     pipeline = (
@@ -102,13 +78,13 @@ async def test_ticker_counter_printer_finishing():
         >> Applicator(func=lambda x: x * 2)
         >> Printer(stream=stream)
     )
-    await execute(pipeline)
+    await helpers.execute(pipeline)
 
     assert stream.getvalue() == '2\n6\n'
 
 
 @pytest.mark.asyncio
-async def test_thread_printer():
+async def test_thread_printer(helpers):
     stream = io.StringIO()
 
     def func(getter, putter):
@@ -129,7 +105,7 @@ async def test_thread_printer():
         >> Applicator(func=lambda x: ''.join(x))
         >> Printer(stream=stream_out)
     )
-    await execute(pipeline)
+    await helpers.execute(pipeline)
 
     assert stream.getvalue() == 'a\nb\nc\nFINISHED\n'
     assert stream_out.getvalue() == 'ab\nc\n'
@@ -149,7 +125,7 @@ def test_pinit_in_actor_exception():
 
 
 @pytest.mark.asyncio
-async def test_appicator_generator():
+async def test_appicator_generator(helpers):
     stream = io.StringIO()
 
     def generate(x):
@@ -161,13 +137,13 @@ async def test_appicator_generator():
         >> Applicator(func=generate)
         >> Printer(stream=stream)
     )
-    await execute(pipeline)
+    await helpers.execute(pipeline)
 
     assert stream.getvalue() == '0\n0\n1\n0\n1\n2\n'
 
 
 @pytest.mark.asyncio
-async def test_repeat():
+async def test_repeat(helpers):
     stream = io.StringIO()
 
     pipeline = (
@@ -176,13 +152,13 @@ async def test_repeat():
         >= Take(limit=2)
         >> Printer(stream=stream)
     )
-    await execute(pipeline)
+    await helpers.execute(pipeline)
 
     assert stream.getvalue() == 'a\na\n'
 
 
 @pytest.mark.asyncio
-async def test_applicator_exception():
+async def test_applicator_exception(helpers):
     stream = io.StringIO()
 
     pipeline = (
@@ -193,6 +169,6 @@ async def test_applicator_exception():
         >> Printer(stream=stream)
     )
     with pytest.raises(ZeroDivisionError):
-        await execute(pipeline)
+        await helpers.execute(pipeline)
 
     assert stream.getvalue() == '1.0\n'
