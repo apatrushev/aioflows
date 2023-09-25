@@ -305,3 +305,36 @@ class Take(Applicator):
             return DATA_FINISH_MARKER
         self.limit -= 1
         return data
+
+
+class Consumer(Sink, Actor):
+    """Sink actor consuming all incoming events with provided function."""
+
+    @dataclasses.dataclass
+    class Arguments:
+        func: Callable[[Any], Any] = None
+        '''Function to be called to consume events.'''
+
+    async def func(self, message):
+        result = self.config.func(message)
+        if (
+            asyncio.iscoroutine(result)
+            and not inspect.isgenerator(result)
+        ):
+            result = asyncio.ensure_future(result)
+        if asyncio.isfuture(result):
+            result = await result
+        if inspect.isasyncgen(result):
+            async def inner(msg):
+                await result.asend(msg)
+            await anext(result)
+            self.func = inner
+        elif inspect.isgenerator(result):
+            async def inner(msg):
+                result.send(msg)
+            next(result)
+            self.func = inner
+
+    async def main(self):
+        async for data in receiver(self.receive):
+            await self.func(data)
