@@ -17,7 +17,7 @@ dynamic = ["version"]
 
 dependencies = [
     "janus",
-    "pydantic<2",
+    "pydantic>=2.4.1,<2.5",
 ]
 
 classifiers = [

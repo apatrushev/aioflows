@@ -147,19 +147,13 @@ class Actor(abc.ABC, metaclass=ActorMeta):
     @property
     def options(self):
         if hasattr(self, 'Options'):
-            options = pydantic.tools.schema_of(self.Options)
+            options = pydantic.TypeAdapter(self.Options).json_schema()
             return (self.options_cleanup(options, self),)
         return ()
 
     @staticmethod
     def options_cleanup(options, obj=None):
         options = copy.deepcopy(options)
-        options.pop('$ref', None)
-        options.pop('type', None)
-        options.pop('title', None)
-        definitions = options.pop('definitions', None)
-        if definitions is not None:
-            options['properties'] = definitions['Options']['properties']
         for k, v in options['properties'].items():
             if obj is not None and hasattr(obj.config, k):
                 v['default'] = getattr(obj.config, k)
